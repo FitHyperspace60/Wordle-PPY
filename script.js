@@ -1,84 +1,99 @@
-let intentos = 6;
-let diccionario = ['COCOS', 'PERRO', 'CIELO', 'MANGA', 'BOTON', 'TORTA', 'CASCO', 'CIEGA', 'CESTA', 'ROBLE'];
-const button = document.getElementById("guess-button");
-const input = document.getElementById("guess-input");
-const GRID = document.getElementById("grid");
-const ROW = document.createElement('div');
-const palabra = diccionario[Math.floor(Math.random() * diccionario.length)];
-ROW.className = 'row';
+const botonRefrescar = document.getElementById('reiniciar');
+const diccionario = [
+    'COCOS', 'PERRO', 'CIELO', 'MANGA', 'BOTON', 'TORTA',
+    'CASCO', 'CIEGA', 'CESTA', 'ROBLE', 'LIBRO', 'PLUMA',
+    'FUEGO', 'NIEVE', 'SOLAR', 'NARIZ', 'RATON', 'TIGRE',
+    'PIANO', 'TEXTO', 'RUEDA', 'ZORRO', 'RAMPA', 'TORRE',
+    'ARBOL', 'MAURO', 'HUEVO', 'MANZA', 'CAZAR', 'LLAVE'
+];
 
-button.addEventListener("click", intentar);
+let respuesta = diccionario[Math.floor(Math.random() * diccionario.length)];
+let respuestaImprimir = respuesta;
+respuesta = respuesta.split('');
 
-window.addEventListener('load', init);
+console.log(respuestaImprimir);
 
-function init(){
-    console.log(palabra);
-}
+var palabraIngresada = [];
+var resultado = document.getElementById('resultado');
+var letra_completada = [];
 
-function intentar(){
-    const INTENTO = leerIntento();
-    const errorMensaje = document.getElementById('error-message');
-    if (INTENTO.length !== 5) {
-        errorMensaje.textContent = "La palabra introducida debe tener 5 letras.";
-        return;
-    }
-    errorMensaje.textContent = "";
-    if (INTENTO === palabra ) {
-        terminar("<h1>¡GANASTE!😀</h1>");
-        const nuevaFila = document.createElement('div');
-        nuevaFila.className = 'row';
-        for (let i = 0; i < palabra.length; i++){
-            const SPAN = document.createElement('span');
-            SPAN.className = 'letter';
-            SPAN.innerHTML = palabra[i];
-            SPAN.style.backgroundColor = "#79b851";
-            nuevaFila.appendChild(SPAN);
+const palabras = document.querySelectorAll('.palabra');
+var intentos = 0;
+palabras[0].focus();
+palabras.forEach((palabra) => {
+    const letras = palabra.querySelectorAll('.letra');
+    let indice = 0;
+    
+    palabra.addEventListener('keydown', function(event) {
+        event.preventDefault();
+        if ((/^[a-zA-Z]$/).test(event.key)) {
+            if (indice < letras.length) {
+                letras[indice].innerText = event.key.toUpperCase();
+                letras[indice].classList.add('seleccionada'); 
+                palabraIngresada.push(event.key.toUpperCase());
+                indice++;
+            }
+        } else if (event.key == 'Backspace') {
+            if (indice > 0) {
+                indice--;
+                letras[indice].innerText = '';
+                letras[indice].classList.remove('seleccionada');
+                palabraIngresada.pop();
+            }
+        } else if (event.key == 'Enter') {
+            if (indice == 5) {
+                intentos++;
+
+                let correctos = 0;
+                for (let i = 0; i < letras.length; i++) {
+                    if (letras[i].innerText == respuesta[i]) {
+                        letras[i].classList.remove('seleccionada');
+                        letras[i].classList.add('correcto');
+                        correctos++;
+                        if (correctos == 5) {
+                            resultado.classList.add('ganar');
+                            resultado.innerHTML = "¡GANASTE!😀";
+                            botonRefrescar.classList.add('activo');
+                            botonRefrescar.focus();
+                            return;
+                        }
+                    } else if (respuesta.includes(letras[i].innerText)) {
+                        letras[i].classList.remove('seleccionada');
+                        letras[i].classList.remove('ninguno');
+                        letras[i].classList.add('parecido');
+                    } else {
+                        letras[i].classList.remove('seleccionada');
+                        letras[i].classList.add('ninguno');
+                    }
+                }
+                if (intentos > 5) {
+                    resultado.classList.add('perder');
+                    resultado.innerHTML = `¡PERDISTE!😖. RESPUESTA:${respuestaImprimir}`;
+                    botonRefrescar.classList.add('activo');
+                    botonRefrescar.focus();
+                    return;
+                }
+
+                palabras[intentos - 1].setAttribute('contenteditable', 'false');
+                palabras[intentos].setAttribute('contenteditable', 'true');
+                palabras[intentos].focus();
+            }
         }
-        GRID.appendChild(nuevaFila);
-        return;
-    }
-    const nuevaFila = document.createElement('div');
-    nuevaFila.className = 'row';
-    const letrasCorrectas = new Set();
-    const letrasEnPalabra = new Set();
-    for (let i = 0; i < palabra.length; i++){
-        if (INTENTO[i] === palabra[i]){
-            letrasCorrectas.add(i);
-        }
-        letrasEnPalabra.add(palabra[i]);
-    }
-    for (let i = 0; i < palabra.length; i++){
-        const SPAN = document.createElement('span');
-        SPAN.className = 'letter';
-        if (letrasCorrectas.has(i)){
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = "#79b851";
-        } else if( letrasEnPalabra.has(INTENTO[i]) ) {
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = "#f3c237";
-        } else {
-            SPAN.innerHTML = INTENTO[i];
-            SPAN.style.backgroundColor = "#a4aec4";
-        }
-        nuevaFila.appendChild(SPAN);
-    }
-    GRID.appendChild(nuevaFila);
-    intentos--;
-    if (intentos === 0){
-        console.log("PERDISTE!");
-        terminar("<h1>¡PERDISTE!😖</h1>");
-    }
-}
+    });
+});
 
-function leerIntento(){
-    let intento = input.value;
-    intento = intento.toUpperCase(); 
-    return intento;
-}
+botonRefrescar.addEventListener('click', () => {
+    location.reload();
+});
 
-function terminar(mensaje){
-    input.disabled = true;
-    button.disabled = true;
-    let contenedor = document.getElementById('guesses');
-    contenedor.innerHTML = mensaje;
+function elementosComunes(array1, array2) {
+    var elementosComunesArray = [];
+
+    for (var i = 0; i < array1.length; i++) {
+        if (array2.includes(array1[i]) && !elementosComunesArray.includes(array1[i])) {
+            elementosComunesArray.push(array1[i]);
+        }
+    }
+
+    return elementosComunesArray;
 }
